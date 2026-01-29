@@ -1,0 +1,19 @@
+[project]
+name = "simulado-crypto"
+version = "0.1.0"
+description = "Simulador de criptoativos"
+requires-python = ">=3.10"
+dependencies = [
+  "fastapi",
+  "httpx",
+  "motor",
+  "passlib[bcrypt]",
+  "pydantic",
+  "python-dotenv",
+  "python-jose[cryptography]",
+  "uvicorn[standard]",
+]
+
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"

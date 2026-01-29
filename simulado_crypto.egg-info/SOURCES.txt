@@ -1,0 +1,11 @@
+pyproject.toml
+routes/auth.py
+routes/carteira.py
+routes/compra.py
+routes/historico.py
+routes/venda.py
+simulado_crypto.egg-info/PKG-INFO
+simulado_crypto.egg-info/SOURCES.txt
+simulado_crypto.egg-info/dependency_links.txt
+simulado_crypto.egg-info/requires.txt
+simulado_crypto.egg-info/top_level.txt

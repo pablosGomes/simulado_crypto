@@ -12,4 +12,5 @@ db = client["crypto_simulador"]
 
 carteiras_collection = db["carteiras"]
 historico_collection = db["historico_transacoes"]
+users_collection = db["users"]
 
