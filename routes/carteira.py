@@ -1,7 +1,9 @@
-﻿from fastapi import APIRouter, HTTPException, status
+﻿from fastapi import APIRouter, HTTPException, status, Depends
 
-from coingecko import buscar_preco
+from coingecko import buscar_preco_com_id
 from db import carteiras_collection
+from dependencies import verify_token
+
 
 carteira_router = APIRouter(tags=["carteira"])
 
@@ -16,9 +18,9 @@ async def get_or_create_wallet():
     return carteira
 
 
-async def preco_atual(moeda: str) -> float:
+async def preco_atual(moeda: str) -> tuple[str, float]:
     try:
-        return await buscar_preco(moeda)
+        return await buscar_preco_com_id(moeda)
     except Exception as exc:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -27,12 +29,12 @@ async def preco_atual(moeda: str) -> float:
 
 
 @carteira_router.get("/cotacao/{moeda}")
-async def cotacao(moeda: str):
-    preco = await preco_atual(moeda)
-    return {"moeda": moeda, "preco_brl": preco}
+async def cotacao(moeda: str, usuario: dict = Depends(verify_token)):
+    moeda_id, preco = await preco_atual(moeda)
+    return {"moeda": moeda_id, "preco_brl": preco}
 
 
 @carteira_router.get("/saldo")
-async def ver_saldo():
+async def ver_saldo(usuario: dict = Depends(verify_token)):
     carteira = await get_or_create_wallet()
     return {"saldo_reais": carteira["saldo_reais"], "criptomoedas": carteira["criptos"]}

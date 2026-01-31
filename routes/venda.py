@@ -1,9 +1,12 @@
 ﻿from datetime import datetime
-from fastapi import APIRouter, HTTPException, status
+from decimal import Decimal, ROUND_DOWN
+
+from fastapi import APIRouter, HTTPException, status, Depends
 from pydantic import BaseModel, Field
 
 from coingecko import buscar_preco_com_id
 from db import carteiras_collection, historico_collection
+from dependencies import verify_token
 
 venda_router = APIRouter(tags=["venda"])
 
@@ -33,42 +36,55 @@ async def preco_atual(moeda: str) -> tuple[str, float]:
         ) from exc
 
 
+def _to_decimal(valor: float | int) -> Decimal:
+    return Decimal(str(valor))
+
+
+def _quantize_8(valor: Decimal) -> Decimal:
+    return valor.quantize(Decimal("0.00000001"), rounding=ROUND_DOWN)
+
+
 @venda_router.post("/vender")
-async def vender(request: VendaRequest):
+async def vender(request: VendaRequest, usuario: dict = Depends(verify_token)):
     moeda_id, preco = await preco_atual(request.moeda)
 
     carteira = await get_or_create_wallet()
     criptos = carteira.get("criptos", {})
-    disponivel = criptos.get(moeda_id, 0)
-    if disponivel < request.quantidade:
+
+    disponivel = _to_decimal(criptos.get(moeda_id, 0))
+    quantidade = _quantize_8(_to_decimal(request.quantidade))
+    if disponivel < quantidade:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Quantidade de criptomoeda insuficiente.",
         )
 
-    valor_reais = request.quantidade * preco
-    criptos[moeda_id] = disponivel - request.quantidade
+    preco_decimal = _to_decimal(preco)
+    valor_reais = _quantize_8(quantidade * preco_decimal)
 
-    novo_saldo = carteira["saldo_reais"] + valor_reais
+    criptos[moeda_id] = float(_quantize_8(disponivel - quantidade))
+
+    saldo_atual = _to_decimal(carteira["saldo_reais"])
+    novo_saldo = saldo_atual + valor_reais
     await carteiras_collection.update_one(
         {"_id": carteira["_id"]},
-        {"$set": {"saldo_reais": novo_saldo, "criptos": criptos}},
+        {"$set": {"saldo_reais": float(novo_saldo), "criptos": criptos}},
     )
 
     transacao = {
         "data_utc": datetime.utcnow().isoformat() + "Z",
         "tipo": "venda",
         "moeda": moeda_id,
-        "quantidade": request.quantidade,
-        "valor_reais": valor_reais,
-        "preco_unitario_brl": preco,
+        "quantidade": float(quantidade),
+        "valor_reais": float(valor_reais),
+        "preco_unitario_brl": float(preco_decimal),
     }
     await historico_collection.insert_one(transacao)
 
     return {
         "mensagem": "Venda realizada com sucesso.",
         "moeda": moeda_id,
-        "quantidade": request.quantidade,
-        "valor_reais": valor_reais,
-        "saldo_reais": novo_saldo,
+        "quantidade": float(quantidade),
+        "valor_reais": float(valor_reais),
+        "saldo_reais": float(novo_saldo),
     }
