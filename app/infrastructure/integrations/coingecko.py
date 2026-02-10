@@ -1,10 +1,22 @@
-﻿import time
+import time
 import httpx
 
 BASE_URL = "https://api.coingecko.com/api/v3"
 _CACHE_TTL_SECONDS = 600
 _MOEDAS_CACHE = []
 _MOEDAS_CACHE_TS = 0.0
+
+
+class CoinGeckoError(Exception):
+    pass
+
+
+class MoedaInvalidaError(CoinGeckoError):
+    pass
+
+
+class MoedaNaoEncontradaError(CoinGeckoError):
+    pass
 
 
 def _normalizar(termo: str) -> str:
@@ -31,23 +43,34 @@ async def _listar_moedas():
 async def buscar_id_moeda(termo: str) -> str:
     termo = _normalizar(termo)
     if not termo:
-        raise Exception("Moeda invalida")
+        raise MoedaInvalidaError("Moeda invalida")
 
     moedas = await _listar_moedas()
+    ids = {}
+    symbols = {}
+    nomes = {}
 
     for moeda in moedas:
-        if moeda.get("id") == termo:
-            return moeda["id"]
+        moeda_id = moeda.get("id")
+        if moeda_id:
+            ids[moeda_id] = moeda_id
 
-    for moeda in moedas:
-        if moeda.get("symbol") == termo:
-            return moeda["id"]
+        symbol = moeda.get("symbol")
+        if symbol:
+            symbols[symbol] = moeda_id
 
-    for moeda in moedas:
-        if _normalizar(moeda.get("name", "")) == termo:
-            return moeda["id"]
+        nome = moeda.get("name")
+        if nome:
+            nomes[_normalizar(nome)] = moeda_id
 
-    raise Exception("Moeda nao encontrada na CoinGecko")
+    if termo in ids:
+        return ids[termo]
+    if termo in symbols and symbols[termo]:
+        return symbols[termo]
+    if termo in nomes and nomes[termo]:
+        return nomes[termo]
+
+    raise MoedaNaoEncontradaError("Moeda nao encontrada na CoinGecko")
 
 
 async def buscar_preco_com_id(moeda: str) -> tuple[str, float]:
@@ -63,7 +86,7 @@ async def buscar_preco_com_id(moeda: str) -> tuple[str, float]:
     data = response.json()
 
     if moeda_id not in data or "brl" not in data[moeda_id]:
-        raise Exception("Moeda nao encontrada na CoinGecko")
+        raise MoedaNaoEncontradaError("Moeda nao encontrada na CoinGecko")
 
     return moeda_id, data[moeda_id]["brl"]
 

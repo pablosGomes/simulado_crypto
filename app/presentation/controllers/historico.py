@@ -1,6 +1,6 @@
 ﻿from fastapi import APIRouter, Depends
-from db import historico_collection
-from dependencies import verify_token
+from app.infrastructure.db.database import historico_collection
+from app.presentation.dependencies import verify_token
 
 historico_router = APIRouter(prefix="/historico", tags=["historico"])
 

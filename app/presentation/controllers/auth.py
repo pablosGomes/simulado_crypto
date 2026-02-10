@@ -2,10 +2,16 @@
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi import APIRouter, HTTPException, status, Depends
 from jose import JWTError, jwt
-from db import users_collection
-from main import bcrypt_context, SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES, oauth2_scheme
-from schemas import UserSchema, LoginSchema
-from dependencies import verify_token
+from app.infrastructure.db.database import users_collection
+from app.presentation.dependencies import verify_token
+from app.domain.models.schemas import UserSchema, LoginSchema
+from app.infrastructure.security import (
+    bcrypt_context,
+    SECRET_KEY,
+    ALGORITHM,
+    ACCESS_TOKEN_EXPIRE_MINUTES,
+    oauth2_scheme,
+)
 
 
 auth_router = APIRouter(prefix="/auth", tags=["autenticacao"])
@@ -34,7 +40,7 @@ async def criar_conta(user: UserSchema):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Usuario ja existe")
 
     senha_criptografada = bcrypt_context.hash(user.password)
-    user_dict = user.dict()
+    user_dict = user.model_dump()
     user_dict["password"] = senha_criptografada
     await users_collection.insert_one(user_dict)
     return {"msg": "Usuario criado com sucesso"}
@@ -64,12 +70,12 @@ async def login_form(dados_forms: OAuth2PasswordRequestForm = Depends()):
 async def refresh_token(token: str = Depends(oauth2_scheme)):
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        username: str | None = payload.get("sub")
+        username = payload.get("sub")
         if username is None:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token invalido")
+
+        new_access_token = criar_token(username)
+        new_refresh_token = criar_token(username)
+        return {"access_token": new_access_token, "refresh_token": new_refresh_token, "token_type": "bearer"}
     except JWTError:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token invalido")
-
-    new_access_token = criar_token(username)
-    new_refresh_token = criar_token(username)
-    return {"access_token": new_access_token, "refresh_token": new_refresh_token, "token_type": "bearer"}

@@ -1,8 +1,12 @@
 ﻿from fastapi import APIRouter, HTTPException, status, Depends
 
-from coingecko import buscar_preco_com_id
-from db import carteiras_collection
-from dependencies import verify_token
+from app.infrastructure.integrations.coingecko import (
+    buscar_preco_com_id,
+    MoedaInvalidaError,
+    MoedaNaoEncontradaError,
+)
+from app.infrastructure.db.database import carteiras_collection
+from app.presentation.dependencies import verify_token
 
 
 carteira_router = APIRouter(tags=["carteira"])
@@ -21,10 +25,20 @@ async def get_or_create_wallet():
 async def preco_atual(moeda: str) -> tuple[str, float]:
     try:
         return await buscar_preco_com_id(moeda)
-    except Exception as exc:
+    except MoedaInvalidaError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(exc),
+        ) from exc
+    except MoedaNaoEncontradaError as exc:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=str(exc),
+        ) from exc
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="Erro ao consultar a CoinGecko.",
         ) from exc
 
 
