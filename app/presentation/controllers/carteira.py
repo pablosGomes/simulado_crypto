@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends
 from app.application.services.carteira_service import obter_cotacao, obter_saldo
 from app.presentation.dependencies import verify_token
 
-carteira_router = APIRouter(tags=["carteira"])
+carteira_router = APIRouter(prefix="/carteira", tags=["carteira"])
 
 
 @carteira_router.get("/cotacao/{moeda}")

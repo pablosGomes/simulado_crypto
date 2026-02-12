@@ -7,7 +7,8 @@ async def get_first_wallet():
 
 async def create_default_wallet():
     carteira = {"saldo_reais": 10000, "criptos": {}}
-    await carteiras_collection.insert_one(carteira)
+    result = await carteiras_collection.insert_one(carteira)
+    carteira["_id"] = result.inserted_id
     return carteira
 
 

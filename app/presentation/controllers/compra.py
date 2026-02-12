@@ -4,7 +4,7 @@ from app.application.services.compra_service import comprar as comprar_service
 from app.domain.models.schemas import CompraRequest
 from app.presentation.dependencies import verify_token
 
-compra_router = APIRouter(tags=["compra"])
+compra_router = APIRouter(prefix="/compra", tags=["compra"])
 
 
 @compra_router.post("/comprar")

@@ -8,6 +8,7 @@ class CompraRequest(BaseModel):
 
 class UserSchema(BaseModel):
     username: str
+    password: str
     email: str
     full_name: Optional[str] = None
     disabled: Optional[bool] = None
