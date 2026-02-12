@@ -40,6 +40,6 @@ Acesse a documentacao em `/docs`.
 
 ## Arquitetura (Layered)
 - Presentation: `app/presentation` (controllers e dependencies do FastAPI)
-- Application: `app/application` (camada de orquestracao/servicos)
+- Application: `app/application` (services)
 - Domain: `app/domain` (schemas e modelos)
-- Infrastructure: `app/infrastructure` (db, integracoes externas, seguranca)
+- Infrastructure: `app/infrastructure` (repositories, db, integracoes externas, seguranca)

@@ -1,7 +1,7 @@
-﻿from fastapi import Depends, HTTPException
+from fastapi import Depends, HTTPException
 from jose import jwt, JWTError
 
-from app.infrastructure.db.database import users_collection
+from app.infrastructure.repositories import users_repository
 from app.infrastructure.security import SECRET_KEY, ALGORITHM, oauth2_scheme
 
 
@@ -12,7 +12,7 @@ async def verify_token(token: str = Depends(oauth2_scheme)):
         if not username:
             raise HTTPException(status_code=401, detail="Token invalido")
 
-        usuario = await users_collection.find_one({"username": username})
+        usuario = await users_repository.find_by_username(username)
         if not usuario:
             raise HTTPException(status_code=401, detail="Usuario nao encontrado")
 
