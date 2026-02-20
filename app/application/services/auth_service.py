@@ -1,6 +1,6 @@
 from fastapi import HTTPException, status
 
-from app.infrastructure.repositories import users_repository
+from app.infrastructure.repositories import users_repository, carteira_repository
 from app.infrastructure.security import (
     bcrypt_context,
     SECRET_KEY,
@@ -36,6 +36,9 @@ async def criar_conta(user):
     user_dict = user.model_dump()
     user_dict["password"] = senha_criptografada
     await users_repository.insert_user(user_dict)
+    carteira = await carteira_repository.get_wallet_by_username(user.username)
+    if not carteira:
+        await carteira_repository.create_default_wallet(user.username)
     return {"msg": "Usuario criado com sucesso"}
 
 

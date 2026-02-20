@@ -8,4 +8,4 @@ historico_router = APIRouter(prefix="/historico", tags=["historico"])
 
 @historico_router.get("")
 async def read_history(usuario: dict = Depends(verify_token)):
-    return await listar()
+    return await listar(usuario["username"])

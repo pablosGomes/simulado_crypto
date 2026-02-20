@@ -8,10 +8,10 @@ from app.infrastructure.integrations.coingecko import (
 from app.infrastructure.repositories import carteira_repository
 
 
-async def get_or_create_wallet():
-    carteira = await carteira_repository.get_first_wallet()
+async def get_or_create_wallet(username: str):
+    carteira = await carteira_repository.get_wallet_by_username(username)
     if not carteira:
-        carteira = await carteira_repository.create_default_wallet()
+        carteira = await carteira_repository.create_default_wallet(username)
     return carteira
 
 
@@ -35,6 +35,6 @@ async def obter_cotacao(moeda: str) -> tuple[str, float]:
         ) from exc
 
 
-async def obter_saldo():
-    carteira = await get_or_create_wallet()
+async def obter_saldo(username: str):
+    carteira = await get_or_create_wallet(username)
     return {"saldo_reais": carteira["saldo_reais"], "criptomoedas": carteira["criptos"]}

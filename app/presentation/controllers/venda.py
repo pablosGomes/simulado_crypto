@@ -9,4 +9,4 @@ venda_router = APIRouter(prefix="/venda", tags=["venda"])
 
 @venda_router.post("/vender")
 async def vender(request: VendaRequest, usuario: dict = Depends(verify_token)):
-    return await vender_service(request)
+    return await vender_service(request, usuario["username"])

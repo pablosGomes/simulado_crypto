@@ -14,4 +14,4 @@ async def cotacao(moeda: str, usuario: dict = Depends(verify_token)):
 
 @carteira_router.get("/saldo")
 async def ver_saldo(usuario: dict = Depends(verify_token)):
-    return await obter_saldo()
+    return await obter_saldo(usuario["username"])

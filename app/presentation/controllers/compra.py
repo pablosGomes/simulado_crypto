@@ -9,4 +9,4 @@ compra_router = APIRouter(prefix="/compra", tags=["compra"])
 
 @compra_router.post("/comprar")
 async def comprar(request: CompraRequest, usuario: dict = Depends(verify_token)):
-    return await comprar_service(request)
+    return await comprar_service(request, usuario["username"])

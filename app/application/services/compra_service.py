@@ -18,7 +18,7 @@ def _quantize_8(valor: Decimal) -> Decimal:
     return valor.quantize(Decimal("0.00000001"), rounding=ROUND_DOWN)
 
 
-async def comprar(request):
+async def comprar(request, username: str):
     try:
         moeda_id, preco = await buscar_preco_com_id(request.moeda)
     except MoedaInvalidaError as exc:
@@ -37,9 +37,9 @@ async def comprar(request):
             detail="Erro ao consultar a CoinGecko.",
         ) from exc
 
-    carteira = await carteira_repository.get_first_wallet()
+    carteira = await carteira_repository.get_wallet_by_username(username)
     if not carteira:
-        carteira = await carteira_repository.create_default_wallet()
+        carteira = await carteira_repository.create_default_wallet(username)
 
     saldo_reais = _to_decimal(carteira["saldo_reais"])
     valor_reais = _to_decimal(request.valor_reais)
@@ -65,6 +65,7 @@ async def comprar(request):
 
     transacao = {
         "data_utc": datetime.utcnow().isoformat() + "Z",
+        "username": username,
         "tipo": "compra",
         "moeda": moeda_id,
         "quantidade": float(quantidade),
